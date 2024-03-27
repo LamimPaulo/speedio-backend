@@ -77,12 +77,12 @@ class WebScraper
     industry_xpath = "#{company_info_base_xpath}[6]/dd"
     
     company_info = {
-      name: data.xpath(name_xpath).text,
-      foundation_year: data.xpath(foundation_year_xpath).text,
-      num_employees: data.xpath(num_employees_xpath).text,
-      hq: data.xpath(hq_xpath).text,
-      yr_revenue: data.xpath(yr_revenue_xpath).text,
-      industry: data.xpath(industry_xpath).text,
+      name: safe_extract(data, name_xpath),
+      foundation_year: safe_extract(data, foundation_year_xpath),
+      num_employees: safe_extract(data, num_employees_xpath),
+      hq: safe_extract(data, hq_xpath),
+      yr_revenue: safe_extract(data, yr_revenue_xpath),
+      industry: safe_extract(data, industry_xpath),
     }
   end
 
@@ -93,15 +93,12 @@ class WebScraper
     country_variation = data.at("#{rank_base_xpath}[2]/span")
 
     rank = {
-      global: data.xpath("#{rank_base_xpath}[1]/div/p").text,
-      global_variation: global_variation.text,
+      global: safe_extract(data, "#{rank_base_xpath}[1]/div/p"),
+      global_variation: safe_extract(data, "#{rank_base_xpath}[1]/div/span"),
       global_variation_direction: global_variation["class"]&.include?("change--up") ? "up" : "down",
-      country: data.xpath("#{rank_base_xpath}[2]/p[2]").text,
-      country_variation: country_variation.text,
+      country: safe_extract(data, "#{rank_base_xpath}[2]/p[2]"),
+      country_variation: safe_extract(data, "#{rank_base_xpath}[2]/span"),\
       country_variation_direction: country_variation["class"]&.include?("change--up") ? "up" : "down",
-      # category: data.xpath("#{rank_base_xpath}[2]/p[2]").text,
-      # category_variation: category_variation.text,
-      # category_variation_direction: category_variation["class"]&.include?("change--up") ? "up" : "down"
     }
   end
 
@@ -109,10 +106,10 @@ class WebScraper
     visits_base_xpath = '//*[@id="overview"]/div/div/div/div[4]/div[2]/div'.freeze
     
     visits = {
-      # total: data.xpath("#{visits_base_xpath}[1]/p[2]").text,
-      bounce_rate: data.xpath("#{visits_base_xpath}[2]/p[2]").text,
-      pages_per_visit: data.xpath("#{visits_base_xpath}[3]/p[2]").text,
-      avg_duration: data.xpath("#{visits_base_xpath}[4]/p[2]").text,
+      total: safe_extract(data, "#{visits_base_xpath}[1]/p[2]"),
+      bounce_rate: safe_extract(data, "#{visits_base_xpath}[2]/p[2]"),
+      pages_per_visit: safe_extract(data, "#{visits_base_xpath}[3]/p[2]"),
+      avg_duration: safe_extract(data, "#{visits_base_xpath}[4]/p[2]"),
     }
   end
 
@@ -120,20 +117,26 @@ class WebScraper
     alike_base_xpath = '[@id="ranking"]/div/div/div[2]/div[2]/div/div/div'.freeze
     traffic_rank = {
       country: {
-        current_month: data.xpath('//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong').text,
-        last_month: data.xpath('//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong').text,
-        two_months_ago: data.xpath('//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong').text,
+        current_month: safe_extract(data, '//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong'),
+        last_month: safe_extract(data, '//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong'),
+        two_months_ago: safe_extract(data, '//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong'),
         similarly_sites: {
-          two_above: {pos: data.xpath("//*#{alike_base_xpath}[1]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[1]/span[3]").text},
-          one_above: {pos: data.xpath("//*#{alike_base_xpath}[2]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[2]/span[3]").text},
-          one_below: {pos: data.xpath("//*#{alike_base_xpath}[4]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[4]/span[3]").text},
-          two_below: {pos: data.xpath("//*#{alike_base_xpath}[5]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[5]/span[3]").text},
+          two_above: {pos: safe_extract(data, "//*#{alike_base_xpath}[1]/span[1]"), domain: safe_extract(data, "//*#{alike_base_xpath}[1]/span[3]")},
+          one_above: {pos: safe_extract(data, "//*#{alike_base_xpath}[2]/span[1]"), domain: safe_extract(data, "//*#{alike_base_xpath}[2]/span[3]")},
+          one_below: {pos: safe_extract(data, "//*#{alike_base_xpath}[4]/span[1]"), domain: safe_extract(data, "//*#{alike_base_xpath}[4]/span[3]")},
+          two_below: {pos: safe_extract(data, "//*#{alike_base_xpath}[5]/span[1]"), domain: safe_extract(data, "//*#{alike_base_xpath}[5]/span[3]")},
         }
       },
       global: {
         # TODO
       },
     }
+  end
+
+  def safe_extract(data, xpath)
+    data.xpath(xpath).text
+  rescue Nokogiri::XML::XPath::SyntaxError
+    '-'
   end
 
 end
