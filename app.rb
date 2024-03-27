@@ -28,7 +28,7 @@ class ScraperApp < Sinatra::Base
       end
     end
 
-    success_response('Scrapping iniciado com sucesso.', { id: job_id })
+    success_response('Scrapping iniciado com sucesso.', { id: job_id }, 201)
   end
 
   post '/get_info' do
@@ -40,6 +40,23 @@ class ScraperApp < Sinatra::Base
     end
 
     data = connector.find_job_by_url(url)
+
+    if data.nil?
+      return not_found('Site indisponivel para consulta no momento.')
+    end
+
+    success_response('Consulta realizada com sucesso!', data)
+  end
+
+  post '/check_id' do
+    request_params = JSON.parse(request.body.read)
+    id = request_params['id']
+
+    if id.nil? || id.empty?
+      return bad_request('O parametro id é obrigatorio.')
+    end
+
+    data = connector.find_job_by_id(id)
 
     if data.nil?
       return not_found('Site indisponivel para consulta no momento.')
@@ -62,8 +79,8 @@ class ScraperApp < Sinatra::Base
     { status: 'error', message: message }.to_json
   end
 
-  def success_response(message, data)
-    status 200
+  def success_response(message, data, code=200)
+    status code
     content_type :json
     { status: 'success', message: message, data: data }.to_json
   end
