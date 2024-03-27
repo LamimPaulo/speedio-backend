@@ -42,12 +42,16 @@ class WebScraper
     rank = extract_rank(data)
     visits = extract_visits(data)
     traffic_rank = extract_traffic_rank(data)
+    top_countries = extract_top_countries(data)
+    composition = extract_composition(data)
 
     {
       company_info: company_info,
       rank: rank,
       visits: visits,
-      traffic_rank: traffic_rank
+      traffic_rank: traffic_rank,
+      top_countries: top_countries,
+      composition: composition,
     }
   end
 
@@ -100,7 +104,10 @@ class WebScraper
       country: data.xpath("#{rank_base_xpath}[2]/p[2]").text,
       country_variation: data.xpath("#{rank_base_xpath}[2]/span").text,
       country_variation_direction: country_variation ? (country_variation["class"]&.include?("change--up") ? "up" : "down") : "-",
-}
+
+      category_pos: data.xpath("#{rank_base_xpath}[3]/div[1]/p").text,
+      category_name: data.xpath("#{rank_base_xpath}[3]/div[2]/a").text,
+    }
   end
 
   def extract_visits(data)
@@ -131,6 +138,62 @@ class WebScraper
       global: {
         # TODO
       },
+    }
+  end
+
+  def extract_top_countries(data)
+    top_co_base_xpath = '//*[@id="geography"]/div/div/div[2]/div[2]/div/div'.freeze
+    top_countries = {
+      first: {
+        name: data.xpath("#{top_co_base_xpath}[1]/div[2]/a").text,
+        percent: data.xpath("#{top_co_base_xpath}[1]/div[2]/div/span[1]").text,
+      },
+      second: {
+        name: data.xpath("#{top_co_base_xpath}[2]/div[2]/a").text,
+        percent: data.xpath("#{top_co_base_xpath}[2]/div[2]/div/span[1]").text,
+      },
+      third: {
+        name: data.xpath("#{top_co_base_xpath}[3]/div[2]/a").text,
+        percent: data.xpath("#{top_co_base_xpath}[3]/div[2]/div/span[1]").text,
+      },
+      fourth: {
+        name: data.xpath("#{top_co_base_xpath}[4]/div[2]/a").text,
+        percent: data.xpath("#{top_co_base_xpath}[4]/div[2]/div/span[1]").text,
+      },
+      fifth: {
+        name: data.xpath("#{top_co_base_xpath}[5]/div[2]/a").text,
+        percent: data.xpath("#{top_co_base_xpath}[5]/div[2]/div/span[1]").text,
+      },
+      others: {
+        name: data.xpath("#{top_co_base_xpath}[6]/div[2]/span").text,
+        percent: data.xpath("#{top_co_base_xpath}[6]/div[2]/div/span[1]").text,
+      },
+    }
+  end
+
+  def extract_composition(data)
+    composition_base_xpath = '//*[@id="demographics"]/div/div/div[2]/div[2]/ul/li'.freeze
+    age_base_xpath = ''.freeze
+    
+    svg_namespace = { 'svg' => 'http://www.w3.org/2000/svg' }
+    xpath_expression = "/html/body/div[1]/div/main/div/div/div[3]/section[3]/div/div/div[2]/div[1]/div/div/div/svg:g[6]/svg:g[2]/svg:text/svg:tspan"
+    composition = {
+      gender: [
+        {
+          name: data.xpath("#{composition_base_xpath}[1]/span[1]").text,
+          percent: data.xpath("#{composition_base_xpath}[1]/span[2]").text,
+        },
+        {
+          name: data.xpath("#{composition_base_xpath}[2]/span[1]").text,
+          percent: data.xpath("#{composition_base_xpath}[2]/span[2]").text,
+        }
+      ],
+      age: [
+        {
+          # title: data.xpath("#{age_base_xpath}[7]/text[1]").text,
+          percent: data.xpath("/html/body/div[1]/div/main/div/div/div[3]/section[3]/div/div/div[2]/div[1]/div/div/div/svg/g[6]/g[1]/text/tspan").text,
+        },
+      ]
     }
   end
 

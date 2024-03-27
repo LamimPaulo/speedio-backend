@@ -4,83 +4,69 @@ require 'securerandom'
 require_relative 'scraper'
 require_relative 'database'
 
-connector = Database::Connector.new
+class ScraperApp < Sinatra::Base
+  connector = Database::Connector.new
 
-get '/' do
-  url = params['url']
-  "Hello world"
-end
+  post '/salve_info' do
+    request_params = JSON.parse(request.body.read)
+    url = request_params['url']
 
-post '/salve_info' do
-  params = JSON.parse(request.body.read)
-  url = params['url']
-  
-  if !url || url.empty?
-    status 400
-    content_type :json
-    return {
-        status: 'error',
-        message: 'O parametro URL é obrigatorio.'
-    }.to_json
-  end
+    if url.nil? || url.empty?
+      return bad_request('O parametro URL é obrigatorio.')
+    end
 
-  job_id = SecureRandom.uuid
-  connector.insert_job(job_id, 'pending', url)
+    job_id = SecureRandom.uuid
+    connector.insert_job(job_id, 'pending', url)
 
-  Thread.new do
-    begin    
+    Thread.new do
+      begin
         scraper = WebScraper.new(url)
         data = scraper.scrape!
-        puts data
         connector.update_job(job_id, 'completed', data)
-    rescue StandardError => e
+      rescue StandardError => e
         connector.update_job(job_id, 'failed', e.message)
+      end
     end
+
+    success_response('Scrapping iniciado com sucesso.', { id: job_id })
   end
 
-  status 201
-  content_type :json
-  {
-    status: 'success',
-    message: 'Scrapping iniciado com sucesso.',
-    data: {
-      id: job_id,
-    }
-  }.to_json
+  post '/get_info' do
+    request_params = JSON.parse(request.body.read)
+    url = request_params['url']
 
-end
+    if url.nil? || url.empty?
+      return bad_request('O parametro URL é obrigatorio.')
+    end
 
-post '/get_info' do
-  params = JSON.parse(request.body.read)
-  url = params['url']
+    data = connector.find_job_by_url(url)
 
-  if !url || url.empty?
+    if data.nil?
+      return not_found('Site indisponivel para consulta no momento.')
+    end
+
+    success_response('Consulta realizada com sucesso!', data)
+  end
+
+  private
+
+  def bad_request(message)
     status 400
     content_type :json
-    return {
-      status: 'error',
-      message: 'O parametro URL é obrigatorio.',
-    }.to_json
+    { status: 'error', message: message }.to_json
   end
 
-  data = connector.find_job_by_url(url)
-  puts data, data.nil?
-
-  if data.nil?
-    status 400
+  def not_found(message)
+    status 404
     content_type :json
-    return {
-      status: 'error',
-      message: 'Site indisponivel para consulta no momento.'
-  }.to_json
+    { status: 'error', message: message }.to_json
   end
 
-
-  status 200
-  content_type :json
-  {
-    status: 'success',
-    message: 'Consulta realizada com sucesso!',
-    data: data
-  }.to_json
+  def success_response(message, data)
+    status 200
+    content_type :json
+    { status: 'success', message: message, data: data }.to_json
+  end
 end
+
+ScraperApp.run!
