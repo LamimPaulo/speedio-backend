@@ -92,19 +92,19 @@ class WebScraper
 
   def extract_rank(data)
     rank_base_xpath = '//*[@id="overview"]/div/div/div/div[3]/div/div'.freeze
-
+  
     global_variation = data.at("#{rank_base_xpath}[1]/div/span")
     country_variation = data.at("#{rank_base_xpath}[2]/span")
-
+  
     rank = {
       global: data.xpath("#{rank_base_xpath}[1]/div/p").text,
       global_variation: data.xpath("#{rank_base_xpath}[1]/div/span").text,
-      global_variation_direction: global_variation ? (global_variation["class"]&.include?("change--up") ? "up" : "down") : "-",
+      global_variation_direction: extract_variation_direction(global_variation),
       
       country: data.xpath("#{rank_base_xpath}[2]/p[2]").text,
       country_variation: data.xpath("#{rank_base_xpath}[2]/span").text,
-      country_variation_direction: country_variation ? (country_variation["class"]&.include?("change--up") ? "up" : "down") : "-",
-
+      country_variation_direction: extract_variation_direction(country_variation),
+  
       category_pos: data.xpath("#{rank_base_xpath}[3]/div[1]/p").text,
       category_name: data.xpath("#{rank_base_xpath}[3]/div[2]/a").text,
     }
@@ -112,89 +112,109 @@ class WebScraper
 
   def extract_visits(data)
     visits_base_xpath = '//*[@id="overview"]/div/div/div/div[4]/div[2]/div'.freeze
-    
-    visits = {
-      # total: data.xpath("#{visits_base_xpath}[1]/p[2]").text,
-      bounce_rate: data.xpath("#{visits_base_xpath}[2]/p[2]").text,
-      pages_per_visit: data.xpath("#{visits_base_xpath}[3]/p[2]").text,
-      avg_duration: data.xpath("#{visits_base_xpath}[4]/p[2]").text,
+  
+    total = data.xpath("#{visits_base_xpath}[1]/p[2]").text
+    bounce_rate = data.xpath("#{visits_base_xpath}[2]/p[2]").text
+    pages_per_visit = data.xpath("#{visits_base_xpath}[3]/p[2]").text
+    avg_duration = data.xpath("#{visits_base_xpath}[4]/p[2]").text
+  
+    {
+      total: total,
+      bounce_rate: bounce_rate,
+      pages_per_visit: pages_per_visit,
+      avg_duration: avg_duration
     }
   end
-
+  
   def extract_traffic_rank(data)
     alike_base_xpath = '[@id="ranking"]/div/div/div[2]/div[2]/div/div/div'.freeze
-    traffic_rank = {
+  
+    current_month = data.xpath('//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong').text
+  
+    similarly_sites = {
+      two_above: {
+        pos: data.xpath("//*#{alike_base_xpath}[1]/span[1]").text,
+        domain: data.xpath("//*#{alike_base_xpath}[1]/span[3]").text
+      },
+      one_above: {
+        pos: data.xpath("//*#{alike_base_xpath}[2]/span[1]").text,
+        domain: data.xpath("//*#{alike_base_xpath}[2]/span[3]").text
+      },
+      one_below: {
+        pos: data.xpath("//*#{alike_base_xpath}[4]/span[1]").text,
+        domain: data.xpath("//*#{alike_base_xpath}[4]/span[3]").text
+      },
+      two_below: {
+        pos: data.xpath("//*#{alike_base_xpath}[5]/span[1]").text,
+        domain: data.xpath("//*#{alike_base_xpath}[5]/span[3]").text
+      }
+    }
+  
+    {
       country: {
-        current_month: data.xpath('//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong').text,
-        last_month: data.xpath('//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong').text,
-        two_months_ago: data.xpath('//*[@id="highcharts-7wjwe4y-0"]/div[2]/span/div/div/strong').text,
-        similarly_sites: {
-          two_above: {pos: data.xpath("//*#{alike_base_xpath}[1]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[1]/span[3]").text},
-          one_above: {pos: data.xpath("//*#{alike_base_xpath}[2]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[2]/span[3]").text},
-          one_below: {pos: data.xpath("//*#{alike_base_xpath}[4]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[4]/span[3]").text},
-          two_below: {pos: data.xpath("//*#{alike_base_xpath}[5]/span[1]").text, domain: data.xpath("//*#{alike_base_xpath}[5]/span[3]").text},
-        }
+        current_month: current_month,
+        last_month: current_month, #need to find a way to fetch from chart.
+        two_months_ago: current_month, # //
+        similarly_sites: similarly_sites
       },
       global: {
         # TODO
-      },
+      }
     }
   end
 
   def extract_top_countries(data)
     top_co_base_xpath = '//*[@id="geography"]/div/div/div[2]/div[2]/div/div'.freeze
-    top_countries = {
-      first: {
-        name: data.xpath("#{top_co_base_xpath}[1]/div[2]/a").text,
-        percent: data.xpath("#{top_co_base_xpath}[1]/div[2]/div/span[1]").text,
-      },
-      second: {
-        name: data.xpath("#{top_co_base_xpath}[2]/div[2]/a").text,
-        percent: data.xpath("#{top_co_base_xpath}[2]/div[2]/div/span[1]").text,
-      },
-      third: {
-        name: data.xpath("#{top_co_base_xpath}[3]/div[2]/a").text,
-        percent: data.xpath("#{top_co_base_xpath}[3]/div[2]/div/span[1]").text,
-      },
-      fourth: {
-        name: data.xpath("#{top_co_base_xpath}[4]/div[2]/a").text,
-        percent: data.xpath("#{top_co_base_xpath}[4]/div[2]/div/span[1]").text,
-      },
-      fifth: {
-        name: data.xpath("#{top_co_base_xpath}[5]/div[2]/a").text,
-        percent: data.xpath("#{top_co_base_xpath}[5]/div[2]/div/span[1]").text,
-      },
-      others: {
-        name: data.xpath("#{top_co_base_xpath}[6]/div[2]/span").text,
-        percent: data.xpath("#{top_co_base_xpath}[6]/div[2]/div/span[1]").text,
-      },
+    top_countries = {}
+  
+    (1..5).each do |i|
+      top_countries["position_#{i}"] = {
+        name: data.xpath("#{top_co_base_xpath}[#{i}]/div[2]/a").text,
+        percent: data.xpath("#{top_co_base_xpath}[#{i}]/div[2]/div/span[1]").text
+      }
+    end
+  
+    others_index = 6
+    top_countries[:others] = {
+      name: data.xpath("#{top_co_base_xpath}[#{others_index}]/div[2]/span").text,
+      percent: data.xpath("#{top_co_base_xpath}[#{others_index}]/div[2]/div/span[1]").text
     }
+  
+    top_countries
   end
 
   def extract_composition(data)
     composition_base_xpath = '//*[@id="demographics"]/div/div/div[2]/div[2]/ul/li'.freeze
-    age_base_xpath = ''.freeze
-    
-    svg_namespace = { 'svg' => 'http://www.w3.org/2000/svg' }
-    xpath_expression = "/html/body/div[1]/div/main/div/div/div[3]/section[3]/div/div/div[2]/div[1]/div/div/div/svg:g[6]/svg:g[2]/svg:text/svg:tspan"
     composition = {
-      gender: [
-        {
-          name: data.xpath("#{composition_base_xpath}[1]/span[1]").text,
-          percent: data.xpath("#{composition_base_xpath}[1]/span[2]").text,
-        },
-        {
-          name: data.xpath("#{composition_base_xpath}[2]/span[1]").text,
-          percent: data.xpath("#{composition_base_xpath}[2]/span[2]").text,
-        }
-      ],
-      age: [
-        {
-          # title: data.xpath("#{age_base_xpath}[7]/text[1]").text,
-          percent: data.xpath("/html/body/div[1]/div/main/div/div/div[3]/section[3]/div/div/div[2]/div[1]/div/div/div/svg/g[6]/g[1]/text/tspan").text,
-        },
-      ]
+      gender: [],
+      age: []
     }
+  
+    (1..2).each do |i|
+      composition[:gender] << {
+        name: data.xpath("#{composition_base_xpath}[#{i}]/span[1]").text,
+        percent: data.xpath("#{composition_base_xpath}[#{i}]/span[2]").text
+      }
+    end
+  
+    composition[:age] << { #chart...
+      percent: data.xpath('/html/body/div[1]/div/main/div/div/div[3]/section[3]/div/div/div[2]/div[1]/div/div/div/svg/g[6]/g[1]/text/tspan').text
+    }
+  
+    composition
   end
+
+  def extract_variation_direction(variation)
+    return "-" if variation.nil?
+  
+    if variation["class"]&.include?("change--up")
+      "up"
+    elsif variation["class"]&.include?("change--down")
+      "down"
+    else
+      "-"
+    end
+  end
+  
 
 end
