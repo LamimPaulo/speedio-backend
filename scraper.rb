@@ -16,24 +16,6 @@ class WebScraper
     make_request(target_url)
   end
 
-  private
-
-  def make_request(url)
-    uri = URI(url)
-    http = Net::HTTP.new(uri.host, uri.port)
-    http.use_ssl = (uri.scheme == 'https')
-    
-    cookie = new_cookie('https://www.similarweb.com/website')
-    headers = {
-      'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
-      'Cookie' => cookie,
-    }
-
-    response = http.get(uri.request_uri, headers)
-    html = response.body
-
-    scraped = scrape_data(html)
-  end
 
   def scrape_data(html)
     data = Nokogiri::HTML(html)
@@ -53,6 +35,25 @@ class WebScraper
       top_countries: top_countries,
       composition: composition,
     }
+  end
+
+  private
+
+  def make_request(url)
+    uri = URI(url)
+    http = Net::HTTP.new(uri.host, uri.port)
+    http.use_ssl = (uri.scheme == 'https')
+    
+    cookie = new_cookie('https://www.similarweb.com/website')
+    headers = {
+      'User-Agent' => 'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/121.0.0.0 Safari/537.36',
+      'Cookie' => cookie,
+    }
+
+    response = http.get(uri.request_uri, headers)
+    html = response.body
+
+    scraped = scrape_data(html)
   end
 
   def new_cookie(url)
