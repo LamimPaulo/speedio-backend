@@ -31,6 +31,7 @@ post '/salve_info' do
     begin    
         scraper = WebScraper.new(url)
         data = scraper.scrape!
+        puts data
         connector.update_job(job_id, 'completed', data)
     rescue StandardError => e
         connector.update_job(job_id, 'failed', e.message)
