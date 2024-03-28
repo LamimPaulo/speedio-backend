@@ -401,8 +401,6 @@ class WebScraper
   def extract_links_to_others(data)
     outgoing_base_xpath = '//*[@id="outgoing-links"]/div/div/div[2]/div[1]/div/div[4]/a'.freeze
     links_base_xpath = '//*[@id="outgoing-links"]/div/div/div[2]/div[2]/div/div'.freeze
-                      # //*[@id="outgoing-links"]/div/div/div[2]/div[2]/div/div[1]/p/span
-                      # [1]/span/text()
 
     response = {
       top_outgoing: [],
