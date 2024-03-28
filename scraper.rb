@@ -30,6 +30,8 @@ class WebScraper
     competitors = extract_competitors(data)
     traffic_source = extract_traffic_source(data)
     top_keywords = extract_top_keywords(data)
+    referral_traffic = extract_referral_traffic(data)
+    display_advertising = extract_display_advertising(data)
 
     {
       company_info: company_info,
@@ -42,6 +44,8 @@ class WebScraper
       competitors: competitors,
       traffic_source: traffic_source,
       top_keywords: top_keywords,
+      referral_traffic: referral_traffic,
+      display_advertising: display_advertising,
     }
   end
 
@@ -90,12 +94,12 @@ class WebScraper
     industry_xpath = "#{company_info_base_xpath}[6]/dd"
     
     company_info = {
-      name: data.xpath(name_xpath).text,
-      foundation_year: data.xpath(foundation_year_xpath).text,
-      num_employees: data.xpath(num_employees_xpath).text,
-      hq: data.xpath(hq_xpath).text,
-      yr_revenue: data.xpath(yr_revenue_xpath).text,
-      industry: data.xpath(industry_xpath).text,
+      name: extract_text(data, name_xpath),
+      foundation_year: extract_text(data, foundation_year_xpath),
+      num_employees: extract_text(data, num_employees_xpath),
+      hq: extract_text(data, hq_xpath),
+      yr_revenue: extract_text(data, yr_revenue_xpath),
+      industry: extract_text(data, industry_xpath),
     }
   end
 
@@ -106,26 +110,26 @@ class WebScraper
     country_variation = data.at("#{rank_base_xpath}[2]/span")
   
     rank = {
-      global: data.xpath("#{rank_base_xpath}[1]/div/p").text,
-      global_variation: data.xpath("#{rank_base_xpath}[1]/div/span").text,
+      global: extract_text(data, "#{rank_base_xpath}[1]/div/p"),
+      global_variation: extract_text(data, "#{rank_base_xpath}[1]/div/span"),
       global_variation_direction: extract_variation_direction(global_variation),
       
-      country: data.xpath("#{rank_base_xpath}[2]/p[2]").text,
-      country_variation: data.xpath("#{rank_base_xpath}[2]/span").text,
+      country: extract_text(data, "#{rank_base_xpath}[2]/p[2]"),
+      country_variation: extract_text(data, "#{rank_base_xpath}[2]/span"),
       country_variation_direction: extract_variation_direction(country_variation),
   
-      category_pos: data.xpath("#{rank_base_xpath}[3]/div[1]/p").text,
-      category_name: data.xpath("#{rank_base_xpath}[3]/div[2]/a").text,
+      category_pos: extract_text(data, "#{rank_base_xpath}[3]/div[1]/p"),
+      category_name: extract_text(data, "#{rank_base_xpath}[3]/div[2]/a"),
     }
   end
 
   def extract_visits(data)
     visits_base_xpath = '//*[@id="overview"]/div/div/div/div[4]/div[2]/div'.freeze
   
-    total = data.xpath("#{visits_base_xpath}[1]/p[2]").text
-    bounce_rate = data.xpath("#{visits_base_xpath}[2]/p[2]").text
-    pages_per_visit = data.xpath("#{visits_base_xpath}[3]/p[2]").text
-    avg_duration = data.xpath("#{visits_base_xpath}[4]/p[2]").text
+    total = extract_text(data, "#{visits_base_xpath}[1]/p[2]"),
+    bounce_rate = extract_text(data, "#{visits_base_xpath}[2]/p[2]"),
+    pages_per_visit = extract_text(data, "#{visits_base_xpath}[3]/p[2]"),
+    avg_duration = extract_text(data, "#{visits_base_xpath}[4]/p[2]"),
   
     {
       total: total,
@@ -142,20 +146,20 @@ class WebScraper
   
     similarly_sites = {
       two_above: {
-        pos: data.xpath("//*#{alike_base_xpath}[1]/span[1]").text,
-        domain: data.xpath("//*#{alike_base_xpath}[1]/span[3]").text
+        pos: extract_text(data, "//*#{alike_base_xpath}[1]/span[1]"),
+        domain: extract_text(data, "//*#{alike_base_xpath}[1]/span[3]")
       },
       one_above: {
-        pos: data.xpath("//*#{alike_base_xpath}[2]/span[1]").text,
-        domain: data.xpath("//*#{alike_base_xpath}[2]/span[3]").text
+        pos: extract_text(data, "//*#{alike_base_xpath}[2]/span[1]"),
+        domain: extract_text(data, "//*#{alike_base_xpath}[2]/span[3]")
       },
       one_below: {
-        pos: data.xpath("//*#{alike_base_xpath}[4]/span[1]").text,
-        domain: data.xpath("//*#{alike_base_xpath}[4]/span[3]").text
+        pos: extract_text(data, "//*#{alike_base_xpath}[4]/span[1]"),
+        domain: extract_text(data, "//*#{alike_base_xpath}[4]/span[3]")
       },
       two_below: {
-        pos: data.xpath("//*#{alike_base_xpath}[5]/span[1]").text,
-        domain: data.xpath("//*#{alike_base_xpath}[5]/span[3]").text
+        pos: extract_text(data, "//*#{alike_base_xpath}[5]/span[1]"),
+        domain: extract_text(data, "//*#{alike_base_xpath}[5]/span[3]")
       }
     }
   
@@ -178,15 +182,15 @@ class WebScraper
   
     (1..5).each do |i|
       top_countries["position_#{i}"] = {
-        name: data.xpath("#{top_co_base_xpath}[#{i}]/div[2]/a").text,
-        percent: data.xpath("#{top_co_base_xpath}[#{i}]/div[2]/div/span[1]").text
+        name: extract_text(data, "#{top_co_base_xpath}[#{i}]/div[2]/a"),
+        percent: extract_text(data, "#{top_co_base_xpath}[#{i}]/div[2]/div/span[1]")
       }
     end
   
     others_index = 6
     top_countries[:others] = {
-      name: data.xpath("#{top_co_base_xpath}[#{others_index}]/div[2]/span").text,
-      percent: data.xpath("#{top_co_base_xpath}[#{others_index}]/div[2]/div/span[1]").text
+      name: extract_text(data, "#{top_co_base_xpath}[#{others_index}]/div[2]/span"),
+      percent: extract_text(data, "#{top_co_base_xpath}[#{others_index}]/div[2]/div/span[1]")
     }
   
     top_countries
@@ -202,15 +206,15 @@ class WebScraper
   
     (1..2).each do |i|
       composition[:gender] << {
-        name: data.xpath("#{composition_base_xpath}[#{i}]/span[1]").text,
-        percent: data.xpath("#{composition_base_xpath}[#{i}]/span[2]").text
+        name: extract_text(data, "#{composition_base_xpath}[#{i}]/span[1]"),
+        percent: extract_text(data, "#{composition_base_xpath}[#{i}]/span[2]")
       }
     end
 
     (1..6).each do |i|
       composition[:age] << {
-        range: data.xpath("#{age_base_xpath}[7]/text[#{i}]").text,
-        percent: data.xpath("#{age_base_xpath}[6]/g[#{i}]/text/tspan").text
+        range: extract_text(data, "#{age_base_xpath}[7]/text[#{i}]"),
+        percent: extract_text(data, "#{age_base_xpath}[6]/g[#{i}]/text/tspan")
       }
     end
   
@@ -227,15 +231,15 @@ class WebScraper
     }
   
     (1..5).each do |i|
-      audience[:top_categories] << data.xpath("#{base_xpath}[1]/div[2]/span[#{i}]").text
+      audience[:top_categories] << extract_text(data, "#{base_xpath}[1]/div[2]/span[#{i}]")
     end
 
     (1..5).each do |i|
-      audience[:other_visited_sites] << data.xpath("#{base_xpath}[2]/div/a[#{i}]/span[2]").text
+      audience[:other_visited_sites] << extract_text(data, "#{base_xpath}[2]/div/a[#{i}]/span[2]")
     end
 
     (1..5).each do |i|
-      audience[:top_topics] << data.xpath("#{base_xpath}[3]/div[2]/span[#{i}]").text
+      audience[:top_topics] << extract_text(data, "#{base_xpath}[3]/div[2]/span[#{i}]")
     end
   
     audience
@@ -248,11 +252,11 @@ class WebScraper
   
     (1..10).each do |i|
       competitors << {
-        site: data.xpath("#{base_xpath}[#{i}]/span[1]/a/span[2]").text,
-        affinity: data.xpath("#{base_xpath}[#{i}]/span[2]/span").text,
-        monthly_visits: data.xpath("#{base_xpath}[#{i}]/span[3]").text,
-        category: data.xpath("#{base_xpath}[#{i}]/span[4]").text,
-        category_rank: data.xpath("#{base_xpath}[#{i}]/span[5]").text,
+        site: extract_text(data, "#{base_xpath}[#{i}]/span[1]/a/span[2]"),
+        affinity: extract_text(data, "#{base_xpath}[#{i}]/span[2]/span"),
+        monthly_visits: extract_text(data, "#{base_xpath}[#{i}]/span[3]"),
+        category: extract_text(data, "#{base_xpath}[#{i}]/span[4]"),
+        category_rank: extract_text(data, "#{base_xpath}[#{i}]/span[5]"),
       }
     end
   
@@ -270,15 +274,15 @@ class WebScraper
   
     (1..7).each do |i|
       sources[:channels] << {     
-        label: data.xpath("#{channel_base_xpath}/div/span[#{i}]/div/span").text,
-        percent: data.xpath("#{channel_base_xpath}/svg/g[6]/g[#{i}]/text/tspan").text,
+        label: extract_text(data, "#{channel_base_xpath}/div/span[#{i}]/div/span"),
+        percent: extract_text(data, "#{channel_base_xpath}/svg/g[6]/g[#{i}]/text/tspan"),
       }
     end
 
     (1..2).each do |i|
       sources[:organic] << {     
-        site: data.xpath("#{organic_base_xpath}[#{i}]/div/span[1]").text,
-        percent: data.xpath("#{organic_base_xpath}[#{i}]/span").text,
+        site: extract_text(data, "#{organic_base_xpath}[#{i}]/div/span[1]"),
+        percent: extract_text(data, "#{organic_base_xpath}[#{i}]/span"),
       }
     end
 
@@ -289,20 +293,85 @@ class WebScraper
     base_xpath = "//*[@id='keywords']/div/div/div[2]/div/div/div[1]/span".freeze
 
     keywords = {
-      total_keywords: data.xpath('//*[@id="keywords"]/div/div/div[2]/div/div/div[3]/div/span[2]').text,
+      total_keywords: extract_text(data, '//*[@id="keywords"]/div/div/div[2]/div/div/div[3]/div/span[2]'),
       list: [],
     }
 
     (1..5).each do |i|
       keywords[:list] << {     
-        word: data.xpath("#{base_xpath}[#{i}]/span[1]/span[1]").text,
-        quantity: data.xpath("#{base_xpath}[#{i}]/span[1]/span[2]").text,
-        vol: data.xpath("#{base_xpath}[#{i}]/span[2]/span[1]").text,
-        value: data.xpath("#{base_xpath}[#{i}]/span[2]/span[2]").text,
+        word: extract_text(data, "#{base_xpath}[#{i}]/span[1]/span[1]"),
+        quantity: extract_text(data, "#{base_xpath}[#{i}]/span[1]/span[2]"),
+        vol: extract_text(data, "#{base_xpath}[#{i}]/span[2]/span[1]"),
+        value: extract_text(data, "#{base_xpath}[#{i}]/span[2]/span[2]"),
       }
     end
 
     keywords
+  end
+
+  def extract_referral_traffic(data)
+    category_base_xpath = '//*[@id="referrals"]/div/div/div[2]/div[1]/div/div'.freeze
+    top_base_xpath = '//*[@id="referrals"]/div/div/div[2]/div[2]/div/div[1]/a'.freeze
+
+    referral = {
+      total: extract_text(data, '//*[@id="referrals"]/div/div/div[2]/div[2]/div/div[3]/div/span[2]'),
+      category_distribution: [],
+      top_referrals: [],
+    }
+
+    (1..5).each do |i|
+      referral[:category_distribution] << {
+        label: extract_text(data, "#{category_base_xpath}[#{i}]/p/span"),
+        percent: extract_text(data, "#{category_base_xpath}[#{i}]/span"),
+      }
+    end
+
+    (1..5).each do |i|
+      
+      label_xpath = "#{top_base_xpath}[#{i}]/span/span[1]"
+      percent_xpath = "#{top_base_xpath}[#{i}]/span/span[2]"
+      label_element = data.at_xpath(label_xpath)
+
+      if label_element.nil? || label_element.text.empty?
+        label_xpath = "#{top_base_xpath}[#{i}]/span/span[2]"
+        percent_xpath = "#{top_base_xpath}[#{i}]/span/span[3]"
+      end
+
+      referral[:top_referrals] << {
+        label: extract_text(data, label_xpath),
+        percent: extract_text(data, percent_xpath),
+      }
+    end
+
+    referral
+  end
+
+  def extract_display_advertising(data)
+    base_xpath = '//*[@id="display-ads"]/div/div/div[2]/div[1]/div/div[1]/a'.freeze
+
+    publishers = {
+      publishers: extract_text(data, '//*[@id="display-ads"]/div/div/div[2]/div[1]/div/div[3]/div[1]/span[2]'),
+      ad_network: extract_text(data, '//*[@id="display-ads"]/div/div/div[2]/div[1]/div/div[3]/div[2]/span[2]'),
+      top_publishers: [],
+    }
+
+    (1..5).each do |i|
+      label_xpath = "#{base_xpath}[#{i}]/span/span[1]"
+      percent_xpath = "#{base_xpath}[#{i}]/span/span[2]"
+      label_element = data.at_xpath(label_xpath)
+
+      if label_element.nil? || label_element.text.empty?
+        label_xpath = "#{base_xpath}[#{i}]/span/span[2]"
+        percent_xpath = "#{base_xpath}[#{i}]/span/span[3]"
+      end
+
+      publishers[:top_publishers] << {
+        label: extract_text(data, label_xpath),
+        percent: extract_text(data, percent_xpath),
+      }
+    end
+
+    publishers
   end
 
   def extract_variation_direction(variation)
@@ -315,6 +384,11 @@ class WebScraper
     else
       "-"
     end
+  end
+
+  def extract_text(data, xpath)
+    element = data.at_xpath(xpath)
+    element ? element.text : nil
   end
   
 
