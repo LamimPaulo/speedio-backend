@@ -5,7 +5,7 @@ require_relative '../scraper'
 class ScraperTest < Minitest::Test
   def test_scraper
     file_path = File.expand_path(File.join(__dir__, 'mock_similarweb.html'))
-    # file_path = File.expand_path(File.join(__dir__, 'force.html'))
+    file_path = File.expand_path(File.join(__dir__, 'force.html'))
 
     File.open(file_path, 'r') do |file|
       html = file.read
