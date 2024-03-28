@@ -1,4 +1,5 @@
 require 'minitest/autorun'
+require 'awesome_print'
 require_relative '../scraper'
 
 class ScraperTest < Minitest::Test
@@ -9,6 +10,8 @@ class ScraperTest < Minitest::Test
       html = file.read
       scraper = WebScraper.new('')
       data = scraper.scrape_data(html)
+
+      ap data
       
       #TODO
     end

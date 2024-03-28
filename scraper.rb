@@ -26,6 +26,10 @@ class WebScraper
     traffic_rank = extract_traffic_rank(data)
     top_countries = extract_top_countries(data)
     composition = extract_composition(data)
+    target_audience = extract_target_audience(data)
+    competitors = extract_competitors(data)
+    traffic_source = extract_traffic_source(data)
+    top_keywords = extract_top_keywords(data)
 
     {
       company_info: company_info,
@@ -34,6 +38,10 @@ class WebScraper
       traffic_rank: traffic_rank,
       top_countries: top_countries,
       composition: composition,
+      target_audience: target_audience,
+      competitors: competitors,
+      traffic_source: traffic_source,
+      top_keywords: top_keywords,
     }
   end
 
@@ -186,6 +194,7 @@ class WebScraper
 
   def extract_composition(data)
     composition_base_xpath = '//*[@id="demographics"]/div/div/div[2]/div[2]/ul/li'.freeze
+    age_base_xpath = '/html/body/div[1]/div/main/div/div/div[3]/section[3]/div/div/div[2]/div[1]/div/div/div/svg/g'.freeze
     composition = {
       gender: [],
       age: []
@@ -197,12 +206,103 @@ class WebScraper
         percent: data.xpath("#{composition_base_xpath}[#{i}]/span[2]").text
       }
     end
-  
-    composition[:age] << { #chart...
-      percent: data.xpath('/html/body/div[1]/div/main/div/div/div[3]/section[3]/div/div/div[2]/div[1]/div/div/div/svg/g[6]/g[1]/text/tspan').text
-    }
+
+    (1..6).each do |i|
+      composition[:age] << {
+        range: data.xpath("#{age_base_xpath}[7]/text[#{i}]").text,
+        percent: data.xpath("#{age_base_xpath}[6]/g[#{i}]/text/tspan").text
+      }
+    end
   
     composition
+  end
+
+  def extract_target_audience(data)
+    base_xpath = "//*[@id='interests']/div/div/div[2]/div".freeze
+    
+    audience = {
+      top_categories: [],
+      other_visited_sites: [],
+      top_topics: [],
+    }
+  
+    (1..5).each do |i|
+      audience[:top_categories] << data.xpath("#{base_xpath}[1]/div[2]/span[#{i}]").text
+    end
+
+    (1..5).each do |i|
+      audience[:other_visited_sites] << data.xpath("#{base_xpath}[2]/div/a[#{i}]/span[2]").text
+    end
+
+    (1..5).each do |i|
+      audience[:top_topics] << data.xpath("#{base_xpath}[3]/div[2]/span[#{i}]").text
+    end
+  
+    audience
+  end
+
+  def extract_competitors(data)
+    base_xpath = '//*[@id="competitors"]/div/div/div[2]/div/div[2]/div'.freeze
+
+    competitors = []
+  
+    (1..10).each do |i|
+      competitors << {
+        site: data.xpath("#{base_xpath}[#{i}]/span[1]/a/span[2]").text,
+        affinity: data.xpath("#{base_xpath}[#{i}]/span[2]/span").text,
+        monthly_visits: data.xpath("#{base_xpath}[#{i}]/span[3]").text,
+        category: data.xpath("#{base_xpath}[#{i}]/span[4]").text,
+        category_rank: data.xpath("#{base_xpath}[#{i}]/span[5]").text,
+      }
+    end
+  
+    competitors
+  end
+
+  def extract_traffic_source(data)
+    channel_base_xpath = '/html/body/div[1]/div/main/div/div/div[5]/section[1]/div/div/div[2]/div[1]/div/div[1]/div'.freeze
+    organic_base_xpath = "//*[@id='traffic-sources']/div/div/div[2]/div[2]/div".freeze
+
+    sources = {
+      channels: [],
+      organic: [],
+    }
+  
+    (1..7).each do |i|
+      sources[:channels] << {     
+        label: data.xpath("#{channel_base_xpath}/div/span[#{i}]/div/span").text,
+        percent: data.xpath("#{channel_base_xpath}/svg/g[6]/g[#{i}]/text/tspan").text,
+      }
+    end
+
+    (1..2).each do |i|
+      sources[:organic] << {     
+        site: data.xpath("#{organic_base_xpath}[#{i}]/div/span[1]").text,
+        percent: data.xpath("#{organic_base_xpath}[#{i}]/span").text,
+      }
+    end
+
+    sources
+  end
+
+  def extract_top_keywords(data)
+    base_xpath = "//*[@id='keywords']/div/div/div[2]/div/div/div[1]/span".freeze
+
+    keywords = {
+      total_keywords: data.xpath('//*[@id="keywords"]/div/div/div[2]/div/div/div[3]/div/span[2]').text,
+      list: [],
+    }
+
+    (1..5).each do |i|
+      keywords[:list] << {     
+        word: data.xpath("#{base_xpath}[#{i}]/span[1]/span[1]").text,
+        quantity: data.xpath("#{base_xpath}[#{i}]/span[1]/span[2]").text,
+        vol: data.xpath("#{base_xpath}[#{i}]/span[2]/span[1]").text,
+        value: data.xpath("#{base_xpath}[#{i}]/span[2]/span[2]").text,
+      }
+    end
+
+    keywords
   end
 
   def extract_variation_direction(variation)
